@@ -9,18 +9,13 @@ import (
 	"time"
 )
 
-// yaml用
-type constellationSetting struct {
-	constellation string
-}
-
 // TODO: 占い結果
 type shiitakeResponse struct {
 }
 
 const appVersion = "0.1.0"
 
-const configFile = ".shiitake.yml"
+const environment = "CONSTELLATION"
 
 var constellations = map[string]string{
 	"aries":       "おひつじ座",
@@ -101,13 +96,10 @@ func main() {
 						log.Fatal("もう一度最初からやり直してください")
 					}
 
-					fp, err := os.Create(configFile)
+					err = os.Setenv(environment, constellation)
 					if err != nil {
 						log.Fatal(err)
 					}
-					defer fp.Close()
-
-					fp.WriteString("constellation: " + constellation)
 
 					fmt.Println("あなたの星座は" + constellation + "ですね")
 					fmt.Println("次からshiitake meで自分の占い結果が見れるよ")
@@ -118,8 +110,11 @@ func main() {
 				Name:  "me",
 				Usage: "my shiitake result",
 				Action: func(c *cli.Context) error {
-					// TODO: 設定ファイル読み込み
-					fmt.Println("今週のあなたの星座の運勢は")
+					constellation := os.Getenv(environment)
+					if len(constellation) == 0 {
+						log.Fatal("shiitake configure を実行してください。")
+					}
+					fmt.Println("今週のあなたの" + constellation + "の運勢は")
 
 					return nil
 				},
