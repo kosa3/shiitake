@@ -9,11 +9,18 @@ import (
 	"time"
 )
 
+// yaml用
+type constellationSetting struct {
+	constellation string
+}
+
 // TODO: 占い結果
 type shiitakeResponse struct {
 }
 
 const appVersion = "0.1.0"
+
+const configFile = ".shiitake.yml"
 
 var constellations = map[string]string{
 	"aries":       "おひつじ座",
@@ -30,10 +37,38 @@ var constellations = map[string]string{
 	"pisces":      "うお座",
 }
 
+// 星座を選択する
+func scanConstellation() (string, error) {
+	for alias, constellation := range constellations {
+		fmt.Println(alias, "("+constellation+")")
+	}
+
+	var constellation string
+	for {
+		fmt.Print("> ")
+		scanner := bufio.NewScanner(os.Stdin)
+		scanner.Scan()
+		constellation = scanner.Text()
+		// check validate
+		if len(constellation) == 0 {
+			fmt.Println("星座を入力してください")
+			continue
+		}
+
+		if _, ok := constellations[constellation]; !ok {
+			fmt.Println(constellation + "という星座はありません。。")
+			continue
+		}
+		break
+	}
+
+	return constellation, nil
+}
+
 func main() {
 	cli.VersionFlag = &cli.BoolFlag{
 		Name: "version", Aliases: []string{"v"},
-		Usage: "print only the version",
+		Usage: "print the version",
 	}
 	app := cli.App{
 		Name:  "shiitake",
@@ -43,23 +78,15 @@ func main() {
 			time.Sleep(time.Second * 1)
 			fmt.Println("占いたい星座の英字を入力して")
 			time.Sleep(time.Second * 1)
-			//TODO 関数として切り出して失敗した時に呼び出す形でも良さそう
-			for alias, constellation := range constellations {
-				fmt.Println(alias, "(" + constellation + ")")
-			}
-			fmt.Print("> ")
-			scanner := bufio.NewScanner(os.Stdin)
-			scanner.Scan()
-			constellation := scanner.Text()
 
-			// check
-			if _, ok := constellations[constellation]; !ok {
-				log.Fatal(constellation + "という星座はありません。。")
+			constellation, err := scanConstellation()
+			if err != nil {
+				log.Fatal("もう一度最初からやり直してください")
 			}
 
 			fmt.Println(constellations[constellation], "の運勢はこちら")
-			// 毎回スクレイピングはあれなのでサーバーでjsonをホスティング配信する
-			// jsonを取得しその内容を表示する
+			// TODO: 毎回スクレイピングはあれなのでサーバーでjsonをホスティング配信する
+			// TODO: jsonを取得しその内容を表示する
 			return nil
 		},
 		Version: appVersion,
@@ -69,13 +96,20 @@ func main() {
 				Aliases: []string{"c"},
 				Usage:   "setting your profile",
 				Action: func(c *cli.Context) error {
-					scanner := bufio.NewScanner(os.Stdin)
-					fmt.Println("あなたの星座はどれ？")
+					constellation, err := scanConstellation()
+					if err != nil {
+						log.Fatal("もう一度最初からやり直してください")
+					}
 
-					scanner.Scan()
-					fmt.Println(scanner.Text())
-					// 終わったらホーム配下に設定ファイルを作り書き込む
-					fmt.Println("あなたの星座は~~ですね")
+					fp, err := os.Create(configFile)
+					if err != nil {
+						log.Fatal(err)
+					}
+					defer fp.Close()
+
+					fp.WriteString("constellation: " + constellation)
+
+					fmt.Println("あなたの星座は" + constellation + "ですね")
 					fmt.Println("次からshiitake meで自分の占い結果が見れるよ")
 					return nil
 				},
@@ -84,7 +118,7 @@ func main() {
 				Name:  "me",
 				Usage: "my shiitake result",
 				Action: func(c *cli.Context) error {
-					// 設定ファイル
+					// TODO: 設定ファイル読み込み
 					fmt.Println("今週のあなたの星座の運勢は")
 
 					return nil
@@ -92,8 +126,11 @@ func main() {
 			},
 		},
 		Before: func(c *cli.Context) error {
-			fmt.Println("before")
-			// ここで設定ファイルをチェックしてなければconfigureして
+			fmt.Println("--------------------------------")
+			return nil
+		},
+		After: func(c *cli.Context) error {
+			fmt.Println("--------------------------------")
 			return nil
 		},
 	}
