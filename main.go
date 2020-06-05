@@ -4,18 +4,19 @@ import (
 	"bufio"
 	"fmt"
 	"github.com/urfave/cli/v2"
+	"gopkg.in/yaml.v2"
+	"io/ioutil"
 	"log"
 	"os"
 	"time"
 )
 
-// yaml用
-type constellationSetting struct {
-	constellation string
+type ShiitakeSetting struct {
+	Constellation string `yaml:"constellation"`
 }
 
 // TODO: 占い結果
-type shiitakeResponse struct {
+type ShiitakeResponse struct {
 }
 
 const appVersion = "0.1.0"
@@ -118,8 +119,18 @@ func main() {
 				Name:  "me",
 				Usage: "my shiitake result",
 				Action: func(c *cli.Context) error {
-					// TODO: 設定ファイル読み込み
-					fmt.Println("今週のあなたの星座の運勢は")
+					file, err := ioutil.ReadFile(configFile)
+					if err != nil {
+						log.Fatal("shiitake configure を実行してください。")
+					}
+
+					setting := ShiitakeSetting{}
+					err = yaml.Unmarshal([]byte(file), &setting)
+					if err != nil {
+						log.Fatal(err)
+					}
+
+					fmt.Println("今週の" + setting.Constellation + "の運勢は")
 
 					return nil
 				},
