@@ -205,15 +205,14 @@ func showMessage(payload Payload) {
 }
 
 func getThisMonday(option Option) time.Time {
-	// optionでagoが設定されていれば週前にする
-	now := time.Now()
-	weekday := now.Weekday()
+	date := time.Now().AddDate(0, 0, -7*option.Ago)
+	weekday := date.Weekday()
 	// 日曜日は0だから合わせるために7にする
 	if weekday == 0 {
 		weekday = 7
 	}
 	// 月曜にしたものを返却する
-	return now.Add(time.Duration(-24*(weekday-1)) * time.Hour)
+	return date.Add(time.Duration(-24*(weekday-1)) * time.Hour)
 }
 
 func main() {
@@ -224,7 +223,13 @@ func main() {
 	app := cli.App{
 		Name:  "shiitake",
 		Usage: "shiitake-fortune-telling",
-		// TODO: FlagでAgoを設定できる
+		Flags: []cli.Flag{
+			&cli.IntFlag{
+				Name:  "ago",
+				Value: 0,
+				Usage: "before fortune-telling",
+			},
+		},
 		Action: func(c *cli.Context) error {
 			fmt.Println("しいたけ占いへようこそ！")
 			time.Sleep(time.Second * 1)
@@ -237,8 +242,7 @@ func main() {
 			}
 
 			fmt.Println(constellations[constellation], "の運勢はこちら")
-
-			date := getThisMonday(Option{Ago: 1})
+			date := getThisMonday(Option{Ago: c.Int("ago")})
 			ShiitakeResponse, err := fetchFortuneTelling(date)
 			if err != nil {
 				log.Fatal(err)
@@ -295,7 +299,7 @@ func main() {
 
 					fmt.Println("今週の" + constellations[setting.Constellation] + "の運勢は")
 
-					date := getThisMonday(Option{Ago: 1})
+					date := getThisMonday(Option{Ago: c.Int("ago")})
 					ShiitakeResponse, err := fetchFortuneTelling(date)
 					if err != nil {
 						log.Fatal(err)
