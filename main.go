@@ -2,11 +2,13 @@ package main
 
 import (
 	"bufio"
+	"encoding/json"
 	"fmt"
 	"github.com/urfave/cli/v2"
 	"gopkg.in/yaml.v2"
 	"io/ioutil"
 	"log"
+	"net/http"
 	"os"
 	"time"
 )
@@ -15,13 +17,81 @@ type ShiitakeSetting struct {
 	Constellation string `yaml:"constellation"`
 }
 
-// TODO: 占い結果
-type ShiitakeResponse struct {
+type Payload struct {
+	Analysis string `json:"analysis"`
+	Advice   string `json:"advice"`
+	PowerUp  string `json:"power_up"`
+	CoolDown string `json:"cool_down"`
 }
 
-const appVersion = "0.1.0"
+type Aries struct {
+	Payload
+}
 
-const configFile = ".shiitake.yml"
+type Taurus struct {
+	Payload
+}
+
+type Gemini struct {
+	Payload
+}
+
+type Cancer struct {
+	Payload
+}
+
+type Leo struct {
+	Payload
+}
+
+type Virgo struct {
+	Payload
+}
+
+type Libra struct {
+	Payload
+}
+
+type Scorpio struct {
+	Payload
+}
+
+type Sagittarius struct {
+	Payload
+}
+
+type Capricorn struct {
+	Payload
+}
+
+type Aquarius struct {
+	Payload
+}
+
+type Pisces struct {
+	Payload
+}
+
+type ShiitakeResponse struct {
+	Aries       `json:"aries"`
+	Taurus      `json:"taurus"`
+	Gemini      `json:"gemini"`
+	Cancer      `json:"cancer"`
+	Leo         `json:"leo"`
+	Virgo       `json:"virgo"`
+	Libra       `json:"libra"`
+	Scorpio     `json:"scorpio"`
+	Sagittarius `json:"sagittarius"`
+	Capricorn   `json:"capricorn"`
+	Aquarius    `json:"aquarius"`
+	Pisces      `json:"pisces"`
+}
+
+const (
+	AppVersion = "0.1.0"
+	ConfigFile = ".shiitake.yml"
+	BaseUrl    = "https://shiitake-fortune-telling.s3-ap-northeast-1.amazonaws.com/"
+)
 
 var constellations = map[string]string{
 	"aries":       "おひつじ座",
@@ -66,6 +136,68 @@ func scanConstellation() (string, error) {
 	return constellation, nil
 }
 
+func fetchFortuneTelling() (ShiitakeResponse, error) {
+	// TODO: 月曜日を取得
+	ShiitakeResponse := ShiitakeResponse{}
+	url := BaseUrl + "20200601.json"
+	response, _ := http.Get(url)
+	defer response.Body.Close()
+
+	body, err := ioutil.ReadAll(response.Body)
+	if err != nil {
+		log.Fatal(err)
+	}
+
+	if err := json.Unmarshal(body, &ShiitakeResponse); err != nil {
+		log.Fatal(err)
+	}
+
+	return ShiitakeResponse, nil
+}
+
+func showFortuneTellingByConstellation(constellation string, ShiitakeResponse ShiitakeResponse) error {
+	switch constellation {
+	case "aries":
+		showMessage(ShiitakeResponse.Aries.Payload)
+	case "taurus":
+		showMessage(ShiitakeResponse.Taurus.Payload)
+	case "gemini":
+		showMessage(ShiitakeResponse.Gemini.Payload)
+	case "cancer":
+		showMessage(ShiitakeResponse.Cancer.Payload)
+	case "leo":
+		showMessage(ShiitakeResponse.Leo.Payload)
+	case "virgo":
+		showMessage(ShiitakeResponse.Virgo.Payload)
+	case "libra":
+		showMessage(ShiitakeResponse.Libra.Payload)
+	case "scorpio":
+		showMessage(ShiitakeResponse.Scorpio.Payload)
+	case "sagittarius":
+		showMessage(ShiitakeResponse.Sagittarius.Payload)
+	case "capricorn":
+		showMessage(ShiitakeResponse.Capricorn.Payload)
+	case "aquarius":
+		showMessage(ShiitakeResponse.Aquarius.Payload)
+	case "pisces":
+		showMessage(ShiitakeResponse.Pisces.Payload)
+	default:
+		fmt.Println("何かおかしい")
+	}
+	return nil
+}
+
+func showMessage(payload Payload) {
+	fmt.Println("-------分析結果-------")
+	fmt.Println(payload.Analysis)
+	fmt.Println("-------アドバイス-------")
+	fmt.Println(payload.Advice)
+	fmt.Println("-------パワーアップカラー-------")
+	fmt.Println(payload.PowerUp)
+	fmt.Println("-------クールダウンカラー-------")
+	fmt.Println(payload.CoolDown)
+}
+
 func main() {
 	cli.VersionFlag = &cli.BoolFlag{
 		Name: "version", Aliases: []string{"v"},
@@ -86,11 +218,19 @@ func main() {
 			}
 
 			fmt.Println(constellations[constellation], "の運勢はこちら")
-			// TODO: 毎回スクレイピングはあれなのでサーバーでjsonをホスティング配信する
-			// TODO: jsonを取得しその内容を表示する
+
+			ShiitakeResponse, err := fetchFortuneTelling()
+			if err != nil {
+				log.Fatal(err)
+			}
+
+			if err := showFortuneTellingByConstellation(constellation, ShiitakeResponse); err != nil {
+				log.Fatal(err)
+			}
+
 			return nil
 		},
-		Version: appVersion,
+		Version: AppVersion,
 		Commands: []*cli.Command{
 			{
 				Name:    "configure",
@@ -102,15 +242,18 @@ func main() {
 						log.Fatal("もう一度最初からやり直してください")
 					}
 
-					fp, err := os.Create(configFile)
+					fp, err := os.Create(ConfigFile)
 					if err != nil {
 						log.Fatal(err)
 					}
 					defer fp.Close()
 
-					fp.WriteString("constellation: " + constellation)
+					_, err = fp.WriteString("constellation: " + constellation)
+					if err != nil {
+						log.Fatal(err)
+					}
 
-					fmt.Println("あなたの星座は" + constellation + "ですね")
+					fmt.Println("あなたの星座は" + constellations[constellation] + "ですね")
 					fmt.Println("次からshiitake meで自分の占い結果が見れるよ")
 					return nil
 				},
@@ -119,7 +262,7 @@ func main() {
 				Name:  "me",
 				Usage: "my shiitake result",
 				Action: func(c *cli.Context) error {
-					file, err := ioutil.ReadFile(configFile)
+					file, err := ioutil.ReadFile(ConfigFile)
 					if err != nil {
 						log.Fatal("shiitake configure を実行してください。")
 					}
@@ -130,8 +273,16 @@ func main() {
 						log.Fatal(err)
 					}
 
-					fmt.Println("今週の" + setting.Constellation + "の運勢は")
+					fmt.Println("今週の" + constellations[setting.Constellation] + "の運勢は")
 
+					ShiitakeResponse, err := fetchFortuneTelling()
+					if err != nil {
+						log.Fatal(err)
+					}
+
+					if err := showFortuneTellingByConstellation(setting.Constellation, ShiitakeResponse); err != nil {
+						log.Fatal(err)
+					}
 					return nil
 				},
 			},
