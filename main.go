@@ -215,6 +215,10 @@ func getThisMonday(option Option) time.Time {
 	return date.Add(time.Duration(-24*(weekday-1)) * time.Hour)
 }
 
+func formatPeriod(date time.Time) string {
+	return "【" + date.Format("2006/1/2") + "~" + date.AddDate(0, 0, 6).Format("2006/1/2") + "】"
+}
+
 func main() {
 	cli.VersionFlag = &cli.BoolFlag{
 		Name: "version", Aliases: []string{"v"},
@@ -241,8 +245,8 @@ func main() {
 				log.Fatal("もう一度最初からやり直してください")
 			}
 
-			fmt.Println(constellations[constellation], "の運勢はこちら")
 			date := getThisMonday(Option{Ago: c.Int("ago")})
+			fmt.Println(formatPeriod(date) + constellations[constellation] + "の運勢はこちら")
 			ShiitakeResponse, err := fetchFortuneTelling(date)
 			if err != nil {
 				log.Fatal(err)
@@ -297,9 +301,9 @@ func main() {
 						log.Fatal(err)
 					}
 
-					fmt.Println("今週の" + constellations[setting.Constellation] + "の運勢は")
-
 					date := getThisMonday(Option{Ago: c.Int("ago")})
+					fmt.Println(formatPeriod(date) + constellations[setting.Constellation] + "の運勢はこちら")
+
 					ShiitakeResponse, err := fetchFortuneTelling(date)
 					if err != nil {
 						log.Fatal(err)
