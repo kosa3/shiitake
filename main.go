@@ -17,6 +17,10 @@ type ShiitakeSetting struct {
 	Constellation string `yaml:"constellation"`
 }
 
+type Option struct {
+	Ago int
+}
+
 type Payload struct {
 	Analysis string `json:"analysis"`
 	Advice   string `json:"advice"`
@@ -136,20 +140,22 @@ func scanConstellation() (string, error) {
 	return constellation, nil
 }
 
-func fetchFortuneTelling() (ShiitakeResponse, error) {
-	// TODO: 月曜日を取得
+func fetchFortuneTelling(date time.Time) (ShiitakeResponse, error) {
 	ShiitakeResponse := ShiitakeResponse{}
-	url := BaseUrl + "20200601.json"
-	response, _ := http.Get(url)
+	url := BaseUrl + date.Format("20060102") + ".json"
+	response, err := http.Get(url)
+	if err != nil {
+		return ShiitakeResponse, err
+	}
 	defer response.Body.Close()
 
 	body, err := ioutil.ReadAll(response.Body)
 	if err != nil {
-		log.Fatal(err)
+		return ShiitakeResponse, err
 	}
 
 	if err := json.Unmarshal(body, &ShiitakeResponse); err != nil {
-		log.Fatal(err)
+		return ShiitakeResponse, err
 	}
 
 	return ShiitakeResponse, nil
@@ -188,14 +194,26 @@ func showFortuneTellingByConstellation(constellation string, ShiitakeResponse Sh
 }
 
 func showMessage(payload Payload) {
-	fmt.Println("-------分析結果-------")
+	fmt.Println("-----------分析結果-----------")
 	fmt.Println(payload.Analysis)
-	fmt.Println("-------アドバイス-------")
+	fmt.Println("----------アドバイス----------")
 	fmt.Println(payload.Advice)
 	fmt.Println("-------パワーアップカラー-------")
 	fmt.Println(payload.PowerUp)
 	fmt.Println("-------クールダウンカラー-------")
 	fmt.Println(payload.CoolDown)
+}
+
+func getThisMonday(option Option) time.Time {
+	// optionでagoが設定されていれば週前にする
+	now := time.Now()
+	weekday := now.Weekday()
+	// 日曜日は0だから合わせるために7にする
+	if weekday == 0 {
+		weekday = 7
+	}
+	// 月曜にしたものを返却する
+	return now.Add(time.Duration(-24*(weekday-1)) * time.Hour)
 }
 
 func main() {
@@ -206,6 +224,7 @@ func main() {
 	app := cli.App{
 		Name:  "shiitake",
 		Usage: "shiitake-fortune-telling",
+		// TODO: FlagでAgoを設定できる
 		Action: func(c *cli.Context) error {
 			fmt.Println("しいたけ占いへようこそ！")
 			time.Sleep(time.Second * 1)
@@ -219,7 +238,8 @@ func main() {
 
 			fmt.Println(constellations[constellation], "の運勢はこちら")
 
-			ShiitakeResponse, err := fetchFortuneTelling()
+			date := getThisMonday(Option{Ago: 1})
+			ShiitakeResponse, err := fetchFortuneTelling(date)
 			if err != nil {
 				log.Fatal(err)
 			}
@@ -275,7 +295,8 @@ func main() {
 
 					fmt.Println("今週の" + constellations[setting.Constellation] + "の運勢は")
 
-					ShiitakeResponse, err := fetchFortuneTelling()
+					date := getThisMonday(Option{Ago: 1})
+					ShiitakeResponse, err := fetchFortuneTelling(date)
 					if err != nil {
 						log.Fatal(err)
 					}
