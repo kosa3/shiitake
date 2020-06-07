@@ -22,7 +22,7 @@ type Option struct {
 
 const (
 	AppVersion = "0.1.0"
-	ConfigFile = ".shiitake.yml"
+	ConfigFile = "/tmp/.shiitake.yml"
 	BaseUrl    = "https://shiitake-fortune-telling.s3-ap-northeast-1.amazonaws.com/"
 )
 
