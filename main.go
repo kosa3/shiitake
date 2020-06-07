@@ -21,7 +21,7 @@ type Option struct {
 }
 
 const (
-	AppVersion = "0.1.0"
+	AppVersion = "0.1.2"
 	ConfigFile = "/tmp/.shiitake.yml"
 	BaseUrl    = "https://shiitake-fortune-telling.s3-ap-northeast-1.amazonaws.com/"
 )
@@ -130,6 +130,7 @@ func main() {
 				Aliases: []string{"c"},
 				Usage:   "setting your profile",
 				Action: func(c *cli.Context) error {
+					fmt.Println("あなたの星座を英字で入力してください")
 					var ShiitakeSetting ShiitakeSetting
 					constellation, err := scanConstellation(ShiitakeSetting)
 					if err != nil {
