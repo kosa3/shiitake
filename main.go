@@ -113,31 +113,30 @@ var constellations = map[string]string{
 }
 
 // 星座を選択する
-func scanConstellation() (string, error) {
+func scanConstellation(ShiitakeSetting ShiitakeSetting) (string, error) {
 	for alias, constellation := range constellations {
 		fmt.Println(alias, "("+constellation+")")
 	}
 
-	var constellation string
 	for {
 		fmt.Print("> ")
 		scanner := bufio.NewScanner(os.Stdin)
 		scanner.Scan()
-		constellation = scanner.Text()
+		ShiitakeSetting.Constellation = scanner.Text()
 		// check validate
-		if len(constellation) == 0 {
+		if len(ShiitakeSetting.Constellation) == 0 {
 			fmt.Println("星座を入力してください")
 			continue
 		}
 
-		if _, ok := constellations[constellation]; !ok {
-			fmt.Println(constellation + "という星座はありません。。")
+		if _, ok := constellations[ShiitakeSetting.Constellation]; !ok {
+			fmt.Println(ShiitakeSetting.Constellation + "という星座はありません。。")
 			continue
 		}
 		break
 	}
 
-	return constellation, nil
+	return ShiitakeSetting.Constellation, nil
 }
 
 func fetchFortuneTelling(date time.Time) (ShiitakeResponse, error) {
@@ -240,7 +239,8 @@ func main() {
 			fmt.Println("占いたい星座の英字を入力して")
 			time.Sleep(time.Second * 1)
 
-			constellation, err := scanConstellation()
+			var ShiitakeSetting ShiitakeSetting
+			constellation, err := scanConstellation(ShiitakeSetting)
 			if err != nil {
 				log.Fatal("もう一度最初からやり直してください")
 			}
@@ -265,7 +265,8 @@ func main() {
 				Aliases: []string{"c"},
 				Usage:   "setting your profile",
 				Action: func(c *cli.Context) error {
-					constellation, err := scanConstellation()
+					var ShiitakeSetting ShiitakeSetting
+					constellation, err := scanConstellation(ShiitakeSetting)
 					if err != nil {
 						log.Fatal("もう一度最初からやり直してください")
 					}
