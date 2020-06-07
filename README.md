@@ -1,5 +1,12 @@
 # しいたけ占い CLI
 
+# install
+
+```
+$ brew tap kosa3/shiitake
+$ brew install shiitake
+```
+
 # command
 
 ```
