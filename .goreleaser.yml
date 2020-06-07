@@ -4,9 +4,9 @@ env:
 before:
   hooks:
     - go mod tidy
+    - go mod download
 builds:
   - main: .
-    binary: shiitake
     ldflags:
       - -s -w
       - -X main.Version={{.Version}}
@@ -15,10 +15,11 @@ builds:
       - CGO_ENABLED=0
 archives:
   - name_template: '{{ .ProjectName }}_{{ .Os }}_{{ .Arch }}{{ if .Arm }}v{{ .Arm }}{{ end }}'
+  - format: binary
     replacements:
-      darwin: darwin
-      linux: linux
-      windows: windows
+      darwin: Darwin
+      linux: Linux
+      windows: Windows
       386: i386
       amd64: x86_64
     format_overrides:
