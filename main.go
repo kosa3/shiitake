@@ -2,13 +2,12 @@ package main
 
 import (
 	"bufio"
-	"encoding/json"
 	"fmt"
+	"github.com/Songmu/flextime"
 	"github.com/urfave/cli/v2"
 	"gopkg.in/yaml.v2"
 	"io/ioutil"
 	"log"
-	"net/http"
 	"os"
 	"time"
 )
@@ -19,76 +18,6 @@ type ShiitakeSetting struct {
 
 type Option struct {
 	Ago int
-}
-
-type Payload struct {
-	Analysis string `json:"analysis"`
-	Advice   string `json:"advice"`
-	PowerUp  string `json:"power_up"`
-	CoolDown string `json:"cool_down"`
-}
-
-type Aries struct {
-	Payload
-}
-
-type Taurus struct {
-	Payload
-}
-
-type Gemini struct {
-	Payload
-}
-
-type Cancer struct {
-	Payload
-}
-
-type Leo struct {
-	Payload
-}
-
-type Virgo struct {
-	Payload
-}
-
-type Libra struct {
-	Payload
-}
-
-type Scorpio struct {
-	Payload
-}
-
-type Sagittarius struct {
-	Payload
-}
-
-type Capricorn struct {
-	Payload
-}
-
-type Aquarius struct {
-	Payload
-}
-
-type Pisces struct {
-	Payload
-}
-
-type ShiitakeResponse struct {
-	Aries       `json:"aries"`
-	Taurus      `json:"taurus"`
-	Gemini      `json:"gemini"`
-	Cancer      `json:"cancer"`
-	Leo         `json:"leo"`
-	Virgo       `json:"virgo"`
-	Libra       `json:"libra"`
-	Scorpio     `json:"scorpio"`
-	Sagittarius `json:"sagittarius"`
-	Capricorn   `json:"capricorn"`
-	Aquarius    `json:"aquarius"`
-	Pisces      `json:"pisces"`
 }
 
 const (
@@ -139,72 +68,8 @@ func scanConstellation(ShiitakeSetting ShiitakeSetting) (string, error) {
 	return ShiitakeSetting.Constellation, nil
 }
 
-func fetchFortuneTelling(date time.Time) (ShiitakeResponse, error) {
-	ShiitakeResponse := ShiitakeResponse{}
-	url := BaseUrl + date.Format("20060102") + ".json"
-	response, err := http.Get(url)
-	if err != nil {
-		return ShiitakeResponse, err
-	}
-	defer response.Body.Close()
-
-	body, err := ioutil.ReadAll(response.Body)
-	if err != nil {
-		return ShiitakeResponse, err
-	}
-
-	if err := json.Unmarshal(body, &ShiitakeResponse); err != nil {
-		return ShiitakeResponse, err
-	}
-
-	return ShiitakeResponse, nil
-}
-
-func showFortuneTellingByConstellation(constellation string, ShiitakeResponse ShiitakeResponse) error {
-	switch constellation {
-	case "aries":
-		showMessage(ShiitakeResponse.Aries.Payload)
-	case "taurus":
-		showMessage(ShiitakeResponse.Taurus.Payload)
-	case "gemini":
-		showMessage(ShiitakeResponse.Gemini.Payload)
-	case "cancer":
-		showMessage(ShiitakeResponse.Cancer.Payload)
-	case "leo":
-		showMessage(ShiitakeResponse.Leo.Payload)
-	case "virgo":
-		showMessage(ShiitakeResponse.Virgo.Payload)
-	case "libra":
-		showMessage(ShiitakeResponse.Libra.Payload)
-	case "scorpio":
-		showMessage(ShiitakeResponse.Scorpio.Payload)
-	case "sagittarius":
-		showMessage(ShiitakeResponse.Sagittarius.Payload)
-	case "capricorn":
-		showMessage(ShiitakeResponse.Capricorn.Payload)
-	case "aquarius":
-		showMessage(ShiitakeResponse.Aquarius.Payload)
-	case "pisces":
-		showMessage(ShiitakeResponse.Pisces.Payload)
-	default:
-		fmt.Println("何かおかしい")
-	}
-	return nil
-}
-
-func showMessage(payload Payload) {
-	fmt.Println("-----------分析結果-----------")
-	fmt.Println(payload.Analysis)
-	fmt.Println("----------アドバイス----------")
-	fmt.Println(payload.Advice)
-	fmt.Println("-------パワーアップカラー-------")
-	fmt.Println(payload.PowerUp)
-	fmt.Println("-------クールダウンカラー-------")
-	fmt.Println(payload.CoolDown)
-}
-
 func getThisMonday(option Option) time.Time {
-	date := time.Now().AddDate(0, 0, -7*option.Ago)
+	date := flextime.Now().AddDate(0, 0, -7*option.Ago)
 	weekday := date.Weekday()
 	// 日曜日は0だから合わせるために7にする
 	if weekday == 0 {
@@ -252,7 +117,7 @@ func main() {
 				log.Fatal(err)
 			}
 
-			if err := showFortuneTellingByConstellation(constellation, ShiitakeResponse); err != nil {
+			if err := ShiitakeResponse.showFortuneTellingByConstellation(constellation); err != nil {
 				log.Fatal(err)
 			}
 
@@ -310,7 +175,7 @@ func main() {
 						log.Fatal(err)
 					}
 
-					if err := showFortuneTellingByConstellation(setting.Constellation, ShiitakeResponse); err != nil {
+					if err := ShiitakeResponse.showFortuneTellingByConstellation(setting.Constellation); err != nil {
 						log.Fatal(err)
 					}
 					return nil
