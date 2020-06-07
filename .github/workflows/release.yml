@@ -1,4 +1,5 @@
 name: release
+
 on:
   push:
     branches:
@@ -19,7 +20,7 @@ jobs:
         with:
           go-version: 1.14
       - name: Run GoReleaser
-        uses: goreleaser/goreleaser-action@v2
+        uses: goreleaser/goreleaser-action@v1
         with:
           version: latest
           args: release --rm-dist
