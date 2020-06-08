@@ -26,5 +26,19 @@ archives:
     format_overrides:
       - goos: windows
         format: zip
+brew:
+  github:
+    owner: kosa3
+    name: homebrew-shiitake
+  commit_author:
+    name: goreleaserbot
+    email: goreleaser@carlosbecker.com
+  description: "shiitake cli"
+  homepage: "https://github.com/kosa3/shiitake"
+  dependencies:
+    - fzf
+  install: |
+    system 'go', 'build'
+    bin.install 'shiitake'
 release:
   prerelease: auto
