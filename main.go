@@ -114,7 +114,8 @@ func main() {
 			fmt.Println(formatPeriod(date) + constellations[constellation] + "の運勢はこちら")
 			ShiitakeResponse, err := fetchFortuneTelling(date)
 			if err != nil {
-				log.Fatal(err)
+				fmt.Println("結果がまだ配信されていません。")
+				return nil
 			}
 
 			if err := ShiitakeResponse.showFortuneTellingByConstellation(constellation); err != nil {
@@ -156,6 +157,13 @@ func main() {
 			{
 				Name:  "me",
 				Usage: "my shiitake result",
+				Flags: []cli.Flag{
+					&cli.IntFlag{
+						Name:  "ago",
+						Value: 0,
+						Usage: "before fortune-telling",
+					},
+				},
 				Action: func(c *cli.Context) error {
 					file, err := ioutil.ReadFile(ConfigFile)
 					if err != nil {
@@ -173,7 +181,8 @@ func main() {
 
 					ShiitakeResponse, err := fetchFortuneTelling(date)
 					if err != nil {
-						log.Fatal(err)
+						fmt.Println("結果がまだ配信されていません。")
+						return nil
 					}
 
 					if err := ShiitakeResponse.showFortuneTellingByConstellation(setting.Constellation); err != nil {
