@@ -1,5 +1,9 @@
 # しいたけ占い CLI
 
+# reference
+
+https://voguegirl.jp/horoscope/shiitake/
+
 # install
 
 ```
